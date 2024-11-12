@@ -3,23 +3,28 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button text="Home"></ion-back-button>
+          <ion-back-button text="Back"></ion-back-button>
         </ion-buttons>
-        <ion-title>Recipe Bank</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="goToAddRecipe"> Add
-          </ion-button>
-        </ion-buttons>
+        <ion-title>Create Schedule</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content padding class="speaker-detail">
-      <ion-searchbar placeholder="Search" @keydown.enter="searchRecipes" v-model="searchQuery"></ion-searchbar>
-      <ion-list>
-        <ion-item v-for="recipe in recipes" @click="router.push({name:'recipe', params:{id:recipe.id}})">
-          <ion-label>{{ recipe.title }}</ion-label>
-        </ion-item>
-      </ion-list>
+    <ion-content padding>
+
+      <ion-card @click="goToMealPlanTool">
+        <ion-card-header>
+          <ion-card-title>Help me pick</ion-card-title>
+          <ion-card-subtitle>Use our tool to autogenerate a meal plan</ion-card-subtitle>
+        </ion-card-header>
+      </ion-card>
+
+      <ion-card @click="goToMealSchedule">
+        <ion-card-header>
+          <ion-card-title>Pick your own meals</ion-card-title>
+          <ion-card-subtitle>Free selection</ion-card-subtitle>
+        </ion-card-header>
+
+      </ion-card>
     </ion-content>
 
 
@@ -37,6 +42,9 @@ import {
   IonButton,
   IonIcon,
   IonContent,
+  IonCardContent,
+  IonCard,
+  IonCardHeader,
   IonTitle,
   IonLabel,
   IonList,
@@ -44,7 +52,11 @@ import {
   IonSearchbar,
   IonBackButton,
 } from '@ionic/vue';
-
+import {
+  logoTwitter,
+  logoGithub,
+  logoInstagram
+} from "ionicons/icons";
 import {useRoute, useRouter} from 'vue-router';
 import {useStore} from '@/store';
 import axios from "axios";
@@ -63,27 +75,22 @@ const recipes = ref([])
 
 function getRecipes() {
   axios.get(baseUrl + '/api/recipes/recipes/').then((response) => {
+    console.log(response.data)
     recipes.value = response.data;
   })
 }
 
 getRecipes()
 
-const goToAddRecipe = () => {
+const goToMealPlanTool = () => {
   router.push({
-    name: "add-recipe",
+    name: "meal-plan-tool",
   });
 };
 
-const searchQuery = ref('')
-const searchRecipes = () => {
-  if (searchQuery.value.length > 0) {
-    axios.get(baseUrl + '/api/recipes/recipes/' + searchQuery.value + '/').then((response) => {
-      recipes.value = response.data;
-    })
-  } else {
-    getRecipes()
-  }
-
-}
+const goToMealSchedule = () => {
+  router.push({
+    name: "meal-plan-tool",
+  });
+};
 </script>

@@ -44,6 +44,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/Tutorial.vue')
   },
   {
+    path: '/meal-plan-tool',
+    name: 'meal-plan-tool',
+    component: () => import('@/views/schedule/MealPlanTool.vue')
+  },
+  {
     path: '/tabs',
     component: () => import('@/views/Tabs.vue'),
     children: [
@@ -51,6 +56,12 @@ const routes: Array<RouteRecordRaw> = [
         path: 'meal-planner',
         name: 'meal-planner',
         component: () => import('@/views/MealPlanner.vue')
+      },
+
+      {
+        path: 'select-schedule',
+        name: 'select-schedule',
+        component: () => import('@/views/schedule/SelectSchedule.vue')
       },
       {
         path: 'schedule',

@@ -335,3 +335,9 @@ def range_of_numbers(n):
 def delete_recipe(request):
     recipe = Recipe.objects.get(id=request.data['id']).delete()
     return Response('Recipe deleted')
+
+
+@api_view(['GET'])
+def search_recipes(request, search_query):
+    recipes = Recipe.objects.filter(title__icontains=search_query)
+    return Response(RecipeSerializer(recipes, many=True).data)

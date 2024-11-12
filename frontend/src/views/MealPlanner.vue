@@ -6,11 +6,11 @@
           <ion-row align-items-stretch>
             <ion-col size="12" size-md="6">
               <ion-card class="speaker-card">
-                <ion-card-content style="text-align: center">
+                <ion-card-content @click="router.push({name:'select-schedule'})" style="text-align: center">
                   No schedule this week
                 </ion-card-content>
                 <ion-card-content style="text-align: center">
-                  <ion-button>Create schedule</ion-button>
+                  <ion-button @click="goToSchedule">Create schedule</ion-button>
                 </ion-card-content>
               </ion-card>
               <ion-card class="speaker-card">
@@ -82,6 +82,7 @@ const allGroupedRef = ref<GroupedSession[]>([]);
 
 
 
+
 const checkAndLoadData = async () => {
   if (allGroupedRef.value.length === 0) {
     await store.dispatch("loadSessionData");
@@ -100,6 +101,12 @@ const router = useRouter();
 const goToRecipeBank = () => {
   router.push({
     name: "recipe-bank",
+  });
+};
+
+const goToSchedule = () => {
+  router.push({
+    name: "select-schedule",
   });
 };
 </script>
