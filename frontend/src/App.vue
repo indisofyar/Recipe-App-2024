@@ -63,6 +63,8 @@ export default defineComponent({
 
     return {
       dark,
+      toastOpen,
+      toastMessage,
       handleDarkModeChanged,
     };
   },

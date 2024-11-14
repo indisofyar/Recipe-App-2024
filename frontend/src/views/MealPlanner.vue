@@ -1,5 +1,7 @@
 <template>
   <ion-page>
+    <ion-header>
+    </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
         <ion-grid fixed>

@@ -18,11 +18,14 @@
       <ion-toolbar>
         <ion-buttons slot="start">
         </ion-buttons>
-        <ion-title>Login</ion-title>
+        <ion-title>Login Hello</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding">
+      {{erorr}}
+      {{baseUrl2}}
+      <span v-if='erorr'>{{erorr.message}}</span>
       <form @submit.prevent="onSignup">
         <ion-list>
           <ion-item>
@@ -65,7 +68,7 @@
   </ion-page>
 </template>
 
-<script lang="ts" setup>
+<script  setup>
 import {computed, ref} from "vue";
 import baseUrl from '@/utils/baseUrl';
 
@@ -101,6 +104,8 @@ const passwordValid = computed(() => {
   return true;
 });
 
+const erorr = ref(null)
+const baseUrl2 = ref(baseUrl)
 const onSignup = () => {
   submitted.value = true;
 
@@ -129,6 +134,7 @@ const onSignup = () => {
         showToast.value = true;
 
       } else {
+        erorr.value = err;
         toastMessage.value = err.message;
         showToast.value = true;
       }

@@ -4,7 +4,7 @@ import sessions, { SessionState } from './modules/sessions';
 import speakers, { SpeakerState } from './modules/speakers';
 import user, { User } from './modules/user';
 import darkMode, { DarkModeState } from './modules/darkMode';
-import toast, { ToastState } from './modules/darkMode';
+import toast, { ToastState } from './modules/toast';
 
 export interface StoreState {
   locations: LocationState,
