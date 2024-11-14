@@ -4,6 +4,7 @@ import sessions, { SessionState } from './modules/sessions';
 import speakers, { SpeakerState } from './modules/speakers';
 import user, { User } from './modules/user';
 import darkMode, { DarkModeState } from './modules/darkMode';
+import toast, { ToastState } from './modules/darkMode';
 
 export interface StoreState {
   locations: LocationState,
@@ -11,6 +12,7 @@ export interface StoreState {
   speakers: SpeakerState,
   user: User,
   darkMode: DarkModeState,
+  toast: ToastState,
 }
 
 const store = createStore<StoreState>({
@@ -20,6 +22,7 @@ const store = createStore<StoreState>({
     speakers,
     user,
     darkMode,
+    toast,
   },
   strict: process.env.NODE_ENV !== 'production'
 });

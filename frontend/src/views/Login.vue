@@ -113,17 +113,26 @@ const onSignup = () => {
       name: 'filler',
       tc: true,
     }).then(res => {
+      if (!res.data) {
+        throw new Error
+      }
       localStorage.setItem('refreshToken', res.data.token.refresh);
       localStorage.setItem('accessToken', res.data.token.access);
       router.push({name: 'meal-planner'});
     }).catch(err => {
       let message = '';
+      if (err.response && err.response.data.errors.email) {
+        for (const text of err.response.data.errors.email) {
+          message += text
+        }
+        toastMessage.value = message;
+        showToast.value = true;
 
-      for (const text of err.response.data.errors.email) {
-        message += text
+      } else {
+        toastMessage.value = err.message;
+        showToast.value = true;
       }
-      toastMessage.value = message;
-      showToast.value = true;
+
 
     })
 
