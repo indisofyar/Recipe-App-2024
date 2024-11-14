@@ -43,10 +43,13 @@ INSTALLED_APPS = [
     "corsheaders",
     'account',
     'recipes',
+    "whitenoise.runserver_nostatic",
+
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
@@ -56,6 +59,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 ROOT_URLCONF = 'authAPI.urls'
 
 TEMPLATES = [
@@ -182,3 +186,5 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 PASSWORD_RESET_TIMEOUT = 900
+
+STATIC_ROOT = BASE_DIR / "staticfiles"

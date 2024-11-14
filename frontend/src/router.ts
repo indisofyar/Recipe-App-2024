@@ -49,6 +49,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/schedule/MealPlanTool.vue')
   },
   {
+    path: '/new-schedule-item',
+    name: 'new-schedule-item',
+    component: () => import('@/views/schedule/NewScheduleItem.vue')
+  },
+  {
     path: '/tabs',
     component: () => import('@/views/Tabs.vue'),
     children: [
@@ -67,6 +72,11 @@ const routes: Array<RouteRecordRaw> = [
         path: 'schedule',
         name: 'schedule',
         component: () => import('@/views/SessionList.vue')
+      },
+      {
+        path: 'recipe-schedule',
+        name: 'recipe-schedule',
+        component: () => import('@/views/schedule/RecipeSchedule.vue')
       },
       {
         name: 'session-detail',
@@ -118,6 +128,11 @@ const routes: Array<RouteRecordRaw> = [
         path: 'about',
         name: 'about',
         component: () => import('@/views/About.vue')
+      },
+      {
+        path: 'shopping-list',
+        name: 'shopping-list',
+        component: () => import('@/views/shopping-list/ShoppingList.vue')
       }
     ]
   },

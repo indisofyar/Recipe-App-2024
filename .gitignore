@@ -26,3 +26,4 @@ frontend/dist
 frontend/node_modules
 .env
 backend/.env
+backend/staticfiles/*

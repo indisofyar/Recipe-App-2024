@@ -2,7 +2,8 @@ from django.urls import path
 
 from recipes.views import RecipeList
 
-from .views import search_google, extract_recipe, recipe, delete_recipe, search_recipes
+from .views import search_google, extract_recipe, recipe, delete_recipe, search_recipes, create_schedule, get_events, \
+    get_shopping_list, amend_shopping_list_item
 
 urlpatterns = [
     path('recipe/<int:recipe_id>', recipe, name='recipe'),
@@ -11,4 +12,8 @@ urlpatterns = [
     path('delete/', delete_recipe),
     path('extract-recipe/', extract_recipe),
     path('search-google/<str:search_term>/', search_google, ),
+    path('create-schedule/', create_schedule),
+    path('events/<int:week_number>/', get_events),
+    path('shopping-list/', get_shopping_list),
+    path('shopping-list/<int:item_id>/', amend_shopping_list_item)
 ]

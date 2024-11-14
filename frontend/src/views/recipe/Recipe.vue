@@ -33,10 +33,12 @@
         style="height: 200px; width: 100%; object-fit: cover"
       ></ion-img>
       <div class="ion-padding">
-        <ion-chip v-html="recipe.prep_time" />
-        <ion-chip v-html="recipe.cook_time" />
+        <ion-chip v-html="recipe.prep_time"/>
+        <ion-chip v-html="recipe.cook_time"/>
         <ion-chip>{{ recipe.serves }}</ion-chip>
         <ion-chip>{{ recipe.difficulty }}</ion-chip>
+        <ion-chip v-for="tag in recipe.tags">{{ tag.text.charAt(0).toUpperCase() + String(tag.text).slice(1) }}
+        </ion-chip>
       </div>
       <div class="ion-padding">
         <h2>Ingredients</h2>

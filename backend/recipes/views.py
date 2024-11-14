@@ -1,13 +1,29 @@
 import os
+import random
 
-import time
-
+from django.utils.timezone import make_aware
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
-from rest_framework.response import Response
 
-from .models import Recipe, Ingredient, Step
-from .serializers import RecipeSerializer
+from .models import Recipe, Ingredient, Step, MealEvent, RecipeTag, ShoppingList, ShoppingListItem
+from .serializers import RecipeSerializer, MealEventSerializer, ShoppingListSerializer
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.db.models import Q
+from .models import MealEvent
+from .serializers import MealEventSerializer
+
+import datetime
+import time
+import warnings
+
+import numpy as np
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+
+warnings.filterwarnings('ignore')
 
 
 class RecipeList(ListAPIView):
@@ -86,11 +102,11 @@ def extract_bbc_user_recipe(html, url, image_url):
         dairy_free = 'Dairy-free' in categories
         gluten_free = 'Gluten-free' in categories
     except:
-        vegetarian = False
-        vegan = False
-        keto = False
-        dairy_free = False
-        gluten_free = False
+        vegetarian = None
+        vegan = None
+        keto = None
+        dairy_free = None
+        gluten_free = None
 
     # Collect ingredients as objects in a list instead of directly assigning them to the recipe
     ingredient_list = []
@@ -211,11 +227,11 @@ def extract_bbc_curator_recipe(html, url, image_url):
         dairy_free = 'Dairy-free' in categories
         gluten_free = 'Gluten-free' in categories
     except:
-        vegetarian = False
-        vegan = False
-        keto = False
-        dairy_free = False
-        gluten_free = False
+        vegetarian = None
+        vegan = None
+        keto = None
+        dairy_free = None
+        gluten_free = None
 
     # Collect ingredients as objects in a list instead of directly assigning them to the recipe
     ingredient_list = []
@@ -296,6 +312,30 @@ def extract_bbc_curator_recipe(html, url, image_url):
     return recipe
 
 
+def clean_recipe(recipe):
+    non_vegetarian_items = [
+        'beef', 'pork', 'veal', 'lamb', 'chicken', 'turkey', 'duck', 'goose',
+        'fish', 'salmon', 'tuna', 'trout', 'mackerel', 'sardine', 'anchovy',
+        'shrimp', 'prawn', 'lobster', 'crab', 'scallop', 'clam', 'oyster',
+        'octopus', 'squid', 'mussel'
+    ]
+
+    # Check if any non-vegetarian item is found in any of the recipe ingredients
+    has_meat = any(
+        meat in ingredient.text.lower() for ingredient in recipe.ingredients.all() for meat in non_vegetarian_items
+    )
+
+    if not has_meat:
+        veg_tag, created = RecipeTag.objects.get_or_create(text=RecipeTag.TAG_VEGETARIAN)
+        recipe.tags.add(veg_tag)
+        recipe.save()
+        print('no meat')
+    else:
+        print('meat found')
+
+    return recipe
+
+
 @api_view(['POST'])
 def extract_recipe(request):
     recipe_data = None
@@ -309,22 +349,12 @@ def extract_recipe(request):
 
     if 'bbcgoodfood.com/user/' in url:
         recipe = extract_bbc_user_recipe(html=html, url=url, image_url=image_url)
+        recipe = clean_recipe(recipe)
     elif 'bbcgoodfood' in url:
         recipe = extract_bbc_curator_recipe(html=html, url=url, image_url=image_url)
+        recipe = clean_recipe(recipe)
 
     return Response(RecipeSerializer(recipe).data)
-
-
-import datetime
-import time
-import warnings
-
-import numpy as np
-import pandas as pd
-import requests
-from bs4 import BeautifulSoup
-
-warnings.filterwarnings('ignore')
 
 
 def range_of_numbers(n):
@@ -341,3 +371,129 @@ def delete_recipe(request):
 def search_recipes(request, search_query):
     recipes = Recipe.objects.filter(title__icontains=search_query)
     return Response(RecipeSerializer(recipes, many=True).data)
+
+
+@api_view(['POST'])
+def create_schedule(request):
+    def create_date(week, day):
+        # Get today's date and start of the week (assuming weeks start on Monday)
+        today = datetime.datetime.today()
+        start_of_this_week = today - datetime.timedelta(days=today.weekday())  # This week's Monday
+
+        # Calculate start of next week if requested
+        if week == "Next Week":
+            start_of_week = start_of_this_week + datetime.timedelta(weeks=1)
+        else:
+            start_of_week = start_of_this_week  # Default to this week
+
+        # Map day names to weekday numbers (0=Monday, 1=Tuesday, ..., 6=Sunday)
+        day_map = {
+            "Monday": 0,
+            "Tuesday": 1,
+            "Wednesday": 2,
+            "Thursday": 3,
+            "Friday": 4,
+            "Saturday": 5,
+            "Sunday": 6,
+        }
+
+        # Calculate the target date for the given day
+        day_offset = day_map.get(day, 0)  # Default to Monday if day is invalid
+        target_date = start_of_week + datetime.timedelta(days=day_offset)
+
+        # Make the date timezone-aware if necessary (e.g., for use in Django)
+        return make_aware(target_date)
+
+    select_meal_table = request.data.get('selectMealTable', [])
+    preferences = request.data.get('preferences', [])
+    meals = []
+    week = request.data.get('week')
+
+    # Process each row in the meal table
+    for row in select_meal_table:
+        day = row[0]  # Assuming the first item in each row is the day
+        for index, col in enumerate(row[1:], start=1):
+            if isinstance(col, bool) and col:
+                meal_type = (
+                    MealEvent.TYPE_BREAKFAST if index == 1 else
+                    MealEvent.TYPE_LUNCH if index == 2 else
+                    MealEvent.TYPE_DINNER
+                )
+                meals.append({
+                    'meal_type': meal_type,
+                    'day': day
+                })
+
+    number_of_meals = len(meals)
+
+    processed_preferences = {
+        'vegetarian': None,
+        'vegan': None,
+    }
+
+    # Put preferences in a more readable format
+    for preference in preferences:
+        if preference['number'] is not None:
+            type = preference['type']
+            processed_preferences[type] = preference['number']
+
+    def find_recipe(tag):
+        recipes = Recipe.objects.filter(tags__in=[tag])
+        return random.sample(list(recipes), 1)[0]
+
+    for meal in meals:
+        # Delete meals of the same type
+        MealEvent.objects.filter(
+            date=create_date(week=week, day=meal['day']),
+            type=meal['meal_type'],
+        ).delete()
+
+        for key, value in processed_preferences.items():
+            if key == 'vegetarian':
+                veg_tag, created = RecipeTag.objects.get_or_create(text=RecipeTag.TAG_VEGETARIAN)
+                recipe = find_recipe(veg_tag)
+
+                meal_event = MealEvent.objects.create(
+                    date=create_date(week=week, day=meal['day']),
+                    recipe=recipe,
+                    type=meal['meal_type'],
+                )
+
+                shopping_list, created = ShoppingList.objects.get_or_create(user=request.user)
+                for ingredient in recipe.ingredients.all():
+                    list_item = ShoppingListItem.objects.create(
+                        ingredient=ingredient,
+                    )
+                    shopping_list.items.add(list_item)
+
+        number_of_meals = number_of_meals - 1
+
+    return Response({'meals': meals, 'number_of_meals': len(meals)}, status=200)
+
+
+@api_view(['GET'])
+def get_events(request, week_number):
+    today = datetime.datetime.today()
+
+    if week_number == 0:
+        start_of_week = today - datetime.timedelta(days=today.weekday())
+        end_of_week = start_of_week + datetime.timedelta(days=6)
+    else:
+        start_of_week = today - datetime.timedelta(days=today.weekday()) + datetime.timedelta(weeks=week_number)
+        end_of_week = start_of_week + datetime.timedelta(days=6)
+
+    meal_events = MealEvent.objects.filter(date__gte=start_of_week, date__lte=end_of_week).order_by('date')
+
+    return Response(MealEventSerializer(meal_events, many=True).data)
+
+
+@api_view(['GET'])
+def get_shopping_list(request):
+    shopping_list = ShoppingList.objects.get(user=request.user)
+    return Response(ShoppingListSerializer(shopping_list).data)
+@api_view(['POST'])
+def amend_shopping_list_item(request, item_id):
+    item = ShoppingListItem.objects.get(id=item_id)
+    item.checked = not item.checked
+    item.save()
+    return Response(item.checked)

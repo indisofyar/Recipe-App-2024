@@ -10,6 +10,16 @@
     </ion-header>
 
     <ion-content class="ion-padding">
+      <h4>Select Week</h4>
+      <ion-list>
+        <ion-item>
+          <ion-select label="Week" v-model="week">
+            <ion-select-option value="This Week">This Week</ion-select-option>
+            <ion-select-option value="Next Week">Next Week</ion-select-option>
+            <ion-select-option value="Other">Other</ion-select-option>
+          </ion-select>
+        </ion-item>
+      </ion-list>
       <h4>Select Meals</h4>
       <table class="table">
         <tr>
@@ -48,6 +58,13 @@
 
       </ion-list>
 
+      <ion-toast
+        :is-open="toastOpen"
+        :message="toastMessage"
+        :duration="3000"
+        @didDismiss="toastOpen = false"
+      ></ion-toast>
+      <ion-button color="primary" @click="createSchedule">Create Schedule</ion-button>
     </ion-content>
 
   </ion-page>
@@ -66,13 +83,16 @@ import {
   IonCard,
   IonCardHeader,
   IonButton,
+  IonToast,
   IonTitle,
   IonLabel,
   IonList,
   IonItem,
+  IonRadio,
+  IonRadioGroup,
   IonSearchbar,
   IonIcon,
-  IonBackButton, IonText, IonPopover, IonSelectOption, IonSelect, IonDatetime,
+  IonBackButton, IonText, IonPopover, IonSelectOption, IonSelect, IonDatetime, loadingController,
 } from '@ionic/vue';
 
 import {checkmark, checkmarkCircleOutline, removeOutline} from 'ionicons/icons';
@@ -106,12 +126,13 @@ const tableClick = (innerContents, index, innerIndex, contents) => {
 
 const preferences = ref([
   {text: 'Any amount', textSecondHalf: ' of vegetarian meals', number: null, type: 'vegetarian'},
+  {text: 'Any amount', textSecondHalf: ' of vegan meals', number: null, type: 'vegan'},
 ])
 
 const numberOfAvailableMeals = computed(() => {
-  let i;
-  for (row of selectMealTable.value) {
-    for (col of row) {
+  let i = 0;
+  for (const row of selectMealTable.value) {
+    for (const col of row) {
       if (col && typeof col == 'boolean') {
         i++;
       }
@@ -121,28 +142,60 @@ const numberOfAvailableMeals = computed(() => {
 })
 
 function managePreference(command, preference) {
-  if (command == 'increase') {
-    // If we want to increase it to an amount which exceeds available meals, display an error
-    if (preference.number + 1 > numberOfAvailableMeals.value) {
-      showToast("You can't increase " + preference.type + " as there aren't enough available meals. Select more meals from the table.")
+  if (command === 'increase') {
+    // If increasing goes beyond the number of available meals, show an error
+    if (preference.number != null && (preference.number || 0) + 1 > numberOfAvailableMeals.value) {
+      showToast(
+        `You can't increase the number of ${preference.type} meals as you've only selected ${numberOfAvailableMeals.value} meals. Select more meals from the table.`
+      );
+      return;
     }
 
+    // Initialize the count if it's null, otherwise increase it
     if (preference.number == null) {
-      preference.number = 1;
+      preference.number = 0;
       preference.text = preference.number;
       preference.textSecondHalf = preference.textSecondHalf.replace('of ', '');
     } else {
-      preference.number = preference.number + 1;
+      preference.number++;
       preference.text = preference.number;
+      if (preference.number == 1) {
+        preference.textSecondHalf = preference.textSecondHalf.replace(' meals', ' meal');
+      } else if (preference.number == 2) {
+        preference.textSecondHalf = preference.textSecondHalf.replace(' meal', ' meals');
+      }
+    }
+  } else if (command === 'decrease') {
+    // If decreasing goes below 1, reset to null for default message
+    if (preference.number <= 0) {
+      preference.number = null;
+      preference.text = 'Any amount';
+      preference.textSecondHalf = ' of ' + preference.type + ' meals';
+    } else {
+      // Decrease the preference count and update text
+      preference.number--;
+      preference.text = preference.number;
+    }
+
+    if (preference.number == 1) {
+      preference.textSecondHalf = preference.textSecondHalf.replace(' meals', ' meal');
+    } else if (preference.number == 0) {
+      preference.textSecondHalf = preference.textSecondHalf.replace(' meal', ' meals');
     }
   }
 }
 
+
+const toastOpen = ref(false);
+const toastMessage = ref('');
+
 function showToast(message) {
+  toastOpen.value = true
+  toastMessage.value = message;
   setTimeout(() => {
+    toastOpen.value = false;
 
-  }, 3000)
-
+  }, 4000)
 }
 
 const store = useStore();
@@ -166,9 +219,22 @@ const goToMealPlanTool = () => {
   });
 };
 
-const goToMealSchedule = () => {
-  router.push({
-    name: "meal-plan-tool",
+const week = ref('This Week')
+const createSchedule = async (recipe) => {
+  const loading = await loadingController.create({
+    message: 'Creating schedule...',
+    duration: 5000,
   });
-};
+
+  loading.present();
+
+  axios.post(baseUrl + '/api/recipes/create-schedule/', {
+    selectMealTable: selectMealTable.value,
+    preferences: preferences.value,
+    week: week.value,
+  }).then((response) => {
+    loading.dismiss();
+    router.push({name:'recipe-schedule'})
+  })
+}
 </script>
