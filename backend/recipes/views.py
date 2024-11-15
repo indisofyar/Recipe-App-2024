@@ -501,6 +501,15 @@ def amend_shopping_list_item(request, item_id):
     return Response(item.checked)
 
 
+@api_view(['POST'])
+def edit_shopping_list_item(request, item_id):
+    item = ShoppingListItem.objects.get(id=item_id)
+    item.checked = request.data['checked']
+    item.ingredient.text = request.data['ingredient']['text']
+    item.save()
+    return Response(item.checked)
+
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -543,3 +552,10 @@ def new_shopping_list_item(request):
     except Exception as e:
         print(f"Error: {e}")
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def clear_shopping_list(request):
+    shopping_list = ShoppingList.objects.get(user=request.user)
+    shopping_list.items.all().delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)

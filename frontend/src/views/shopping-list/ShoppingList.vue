@@ -6,10 +6,11 @@ import {
   IonContent,
   IonButton,
   IonList,
+  IonTitle,
   IonItem,
   IonRefresher,
   IonRefresherContent,
-  IonCheckbox
+  IonCheckbox, IonPopover, IonLabel, IonHeader, IonToolbar, IonMenuButton, IonButtons
 } from '@ionic/vue';
 import {ref, watch} from "vue";
 import axios from "axios";
@@ -18,6 +19,7 @@ import router from "@/router";
 import {useRoute} from "vue-router";
 
 import {onClickOutside} from '@vueuse/core'
+import {ellipsisHorizontal} from "ionicons/icons";
 
 const addingNewItem = ref(false);  // Track if we're adding a new item
 const newItemText = ref("");  // New item text input
@@ -50,8 +52,20 @@ const getShoppingList = () => {
   })
 }
 
+const clearShoppingList = () => {
+  axios.post(baseUrl + '/api/recipes/clear-shopping-list/').then((response) => {
+    getShoppingList()
+  })
+}
 
-getShoppingList();
+const editItem = (item) => {
+  axios.post(`${baseUrl}/api/recipes/shopping-list-item/${itemId}/`, item).then(response => {
+    console.log('Updated item', response.data)
+  }).catch(error => {
+    console.error("Failed to update item status:", error);
+  });
+};
+
 
 const updateItemStatus = (itemId, checked) => {
   axios.post(`${baseUrl}/api/recipes/shopping-list/${itemId}/`, {
@@ -106,19 +120,41 @@ onClickOutside(target, event => {
 
 <template>
   <ion-page>
+    <ion-header class="ion-no-border">
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-menu-button></ion-menu-button>
+        </ion-buttons>
+        <ion-title>
+          Shopping List
+        </ion-title>
+        <ion-buttons slot="end">
+          <ion-button id="popover-button">
+            <ion-icon slot="icon-only" :icon="ellipsisHorizontal"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
     <ion-content :fullscreen="true" padding class="ion-padding">
+
       <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
-      <h3>Shopping List</h3>
       <ion-list>
         <ion-item v-for="item in shoppingList.items" :key="item.id">
-          <ion-checkbox label-placement="start"
+          <ion-checkbox label-placement="end"
+                        alignment="start"
+                        justify="start"
                         v-model="item.checked"
-                        v-html="item.ingredient.text"
+
                         @ionChange="updateItemStatus(item.id, item.checked)"
           ></ion-checkbox>
-
+          <div style="width: 15px"></div>
+          <ion-input v-model="item.ingredient.text"
+                     @input="editItem(item)"
+                     ref="target"
+                     autofocus
+          ></ion-input>
         </ion-item>
       </ion-list>
 
@@ -136,6 +172,16 @@ onClickOutside(target, event => {
       <ion-button v-if="!addingNewItem" @click="addingNewItem = true" expand="block" fill="clear">
         Add
       </ion-button>
+
+      <ion-popover trigger="popover-button" :dismiss-on-select="true">
+        <ion-content>
+          <ion-list>
+            <ion-item button @click="clearShoppingList()">
+              <ion-label>Clear</ion-label>
+            </ion-item>
+          </ion-list>
+        </ion-content>
+      </ion-popover>
 
     </ion-content>
   </ion-page>

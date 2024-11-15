@@ -140,6 +140,6 @@ getEvents();
 const router = useRouter()
 
 const goToAddRecipe = () => {
-
+  router.push({name: 'recipe-bank'})
 }
 </script>

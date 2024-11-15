@@ -1,7 +1,7 @@
 <template>
   <ion-app>
     <ion-split-pane content-id="main-content">
-<!--      <Menu :dark="dark" @dark-mode-changed="handleDarkModeChanged"/>-->
+      <!--      <Menu :dark="dark" @dark-mode-changed="handleDarkModeChanged"/>-->
       <ion-router-outlet id="main-content"/>
     </ion-split-pane>
     <ion-toast
@@ -17,7 +17,7 @@
 
 <script lang="ts">
 import {IonApp, IonSplitPane, IonRouterOutlet, IonToast} from '@ionic/vue';
-import {Ref, defineComponent, onMounted, ref, computed} from 'vue';
+import {Ref, defineComponent, onMounted, ref, computed, getCurrentInstance} from 'vue';
 import Menu from "./components/Menu.vue";
 import {useStore} from '@/store';
 import {Storage} from '@ionic/storage';
@@ -43,16 +43,20 @@ export default defineComponent({
 
     const store = useStore();
 
-    const toastOpen =  computed(() => store.getters.toastOpen);
+    const toastOpen = computed(() => store.getters.toastOpen);
     const toastMessage = computed(() => store.getters.toastMessage);
-
-
-
+    const instance = getCurrentInstance();
 
     const handleDarkModeChanged = (newDarkValue: boolean) => {
       dark.value = newDarkValue;
       document.documentElement.classList.toggle('ion-palette-dark', newDarkValue);
     };
+
+
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      handleDarkModeChanged(true)
+    }
+
 
     onMounted(async () => {
       globalStorage = await initializeStorage();
