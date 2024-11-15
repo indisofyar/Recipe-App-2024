@@ -140,6 +140,7 @@ const routes: Array<RouteRecordRaw> = [
 ];
 
 const router = createRouter({
+  mode:'history',
   // @ts-ignore
   history: createWebHistory(import.meta.env.BASE_URL),
   routes

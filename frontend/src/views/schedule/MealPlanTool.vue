@@ -239,6 +239,8 @@ const createSchedule = async (recipe) => {
   })
 }
 
+
+const refreshToken = localStorage.getItem('refreshToken');
 axios.post(baseUrl + '/api/user/token/refresh/', {
   refresh: refreshToken
 }).then((response) => {
@@ -247,7 +249,9 @@ axios.post(baseUrl + '/api/user/token/refresh/', {
   accessTokenFull = 'Bearer ' + accessToken
   axios.defaults.headers.common['Authorization'] = accessTokenFull;
   getShoppingList()
-}).catch(e => loaded.value = true)
+}).catch(e => {
+
+})
 
 
 </script>
