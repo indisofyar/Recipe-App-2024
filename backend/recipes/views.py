@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 
 from .models import Recipe, Ingredient, Step, MealEvent, RecipeTag, ShoppingList, ShoppingListItem
-from .serializers import RecipeSerializer, MealEventSerializer, ShoppingListSerializer
+from .serializers import RecipeSerializer, MealEventSerializer, ShoppingListSerializer, ShoppingListItemSerializer
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -491,9 +491,55 @@ def get_events(request, week_number):
 def get_shopping_list(request):
     shopping_list = ShoppingList.objects.get(user=request.user)
     return Response(ShoppingListSerializer(shopping_list).data)
+
+
 @api_view(['POST'])
 def amend_shopping_list_item(request, item_id):
     item = ShoppingListItem.objects.get(id=item_id)
     item.checked = not item.checked
     item.save()
     return Response(item.checked)
+
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from .models import ShoppingListItem, ShoppingList, Ingredient
+from .serializers import ShoppingListItemSerializer
+
+
+@api_view(['POST'])
+def new_shopping_list_item(request):
+    data = request.data
+    id = data.get('id')
+    checked = data.get('checked')
+    text = data.get('text')
+    shopping_list_id = data.get('shoppingListId')
+
+    # Ensure required fields are present
+    if checked is None or text is None:
+        return Response({"error": "Both 'checked' and 'text' are required fields."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        if id is not None:
+            item = get_object_or_404(ShoppingListItem, id=id)
+            item.checked = checked
+            if hasattr(item, 'ingredient') and item.ingredient:
+                item.ingredient.text = text
+                item.ingredient.save()
+            else:
+                item.ingredient = Ingredient.objects.create(text=text)
+            item.save()
+        else:
+            ingredient = Ingredient.objects.create(text=text)
+            item = ShoppingListItem.objects.create(checked=checked, ingredient=ingredient)
+            shopping_list = get_object_or_404(ShoppingList, id=shopping_list_id)
+            shopping_list.items.add(item)
+
+        serialized_item = ShoppingListItemSerializer(item)
+        return Response(serialized_item.data, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

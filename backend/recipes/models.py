@@ -75,6 +75,12 @@ class ShoppingListItem(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     checked = models.BooleanField(default=False)
 
+    def __str__(self):
+        if self.ingredient:
+            return self.ingredient.text + ' ' + str(self.id)
+        else:
+            return self.id
+
 class ShoppingList(models.Model):
     items = models.ManyToManyField(ShoppingListItem)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)

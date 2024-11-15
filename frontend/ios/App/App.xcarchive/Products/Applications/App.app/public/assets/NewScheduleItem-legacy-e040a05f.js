@@ -1,0 +1,1 @@
+System.register(["./index-legacy-595d99ac.js"],(function(e,t){"use strict";var n,r,i,u;return{setters:[function(e){n=e._,r=e.N,i=e.g,u=e.i}],execute:function(){e("default",n({},[["render",function(e,t){var n=r("ion-page");return i(),u(n)}]]))}}}));

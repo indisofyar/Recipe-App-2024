@@ -66,7 +66,6 @@
       ></ion-toast>
       <ion-button color="primary" @click="createSchedule">Create Schedule</ion-button>
     </ion-content>
-
   </ion-page>
 </template>
 
@@ -81,6 +80,8 @@ import {
   IonContent,
   IonCardContent,
   IonCard,
+  IonRefresherContent,
+  IonRefresher,
   IonCardHeader,
   IonButton,
   IonToast,
@@ -234,7 +235,19 @@ const createSchedule = async (recipe) => {
     week: week.value,
   }).then((response) => {
     loading.dismiss();
-    router.push({name:'recipe-schedule'})
+    router.push({name: 'recipe-schedule'})
   })
 }
+
+axios.post(baseUrl + '/api/user/token/refresh/', {
+  refresh: refreshToken
+}).then((response) => {
+  localStorage.setItem('accessToken', response.data.access);
+  accessToken = localStorage.getItem('accessToken');
+  accessTokenFull = 'Bearer ' + accessToken
+  axios.defaults.headers.common['Authorization'] = accessTokenFull;
+  getShoppingList()
+}).catch(e => loaded.value = true)
+
+
 </script>

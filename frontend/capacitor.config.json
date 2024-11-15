@@ -1,6 +1,6 @@
 {
   "appId": "io.ionic.starter",
-  "appName": "heelo",
+  "appName": "Meal Planner",
   "bundledWebRuntime": false,
   "webDir": "dist"
 }

@@ -1,7 +1,7 @@
 <template>
   <ion-app>
     <ion-split-pane content-id="main-content">
-      <Menu :dark="dark" @dark-mode-changed="handleDarkModeChanged"/>
+<!--      <Menu :dark="dark" @dark-mode-changed="handleDarkModeChanged"/>-->
       <ion-router-outlet id="main-content"/>
     </ion-split-pane>
     <ion-toast
